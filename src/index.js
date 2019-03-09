@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+const { vectorize } = "./query";
 
 /* Connection Configuration */
 var config = {
@@ -12,15 +13,63 @@ var config = {
 };
 const pool = new Pool(config);
 
-/* Perform operations */
-pool.on("error", function(err, client) {
-  console.error("idle client error", err.message, err.stack);
-});
+// vectorize and search in same db operation
+const vectorizeAndSearchTerm = () => {
+  console.time("vectorizeAndSearchTerm");
+  pool.query(
+    `SELECT
+    * 
+    FROM camps
+    WHERE
+    to_tsvector(camps.title || ' ' || camps.description) @@ to_tsquery('star')`,
+    [],
+    function(err, res) {
+      if (err) {
+        return console.error("error running query", err);
+      }
+      console.timeEnd("vectorizeAndSearchTerm");
+      console.log("vectorizeAndSearchTerm: res.rowCount ", res.rowCount);
+    }
+  );
+};
 
-pool.query("SELECT $1::int AS number", ["2"], function(err, res) {
-  if (err) {
-    return console.error("error running query", err);
-  }
-  console.log("number:", res.rows);
-  process.exit(0);
-});
+// vectorize title & description in camps
+const vectorization = () => {
+  console.time("vectorization");
+  pool.query(
+    `UPDATE camps
+    SET document = to_tsvector( title || '' || description )`,
+    [],
+    function(err, res) {
+      if (err) {
+        return console.error("error running query", err);
+      }
+      console.timeEnd("vectorization");
+      console.log("vectorization: res.rowCount ", res.rowCount);
+    }
+  );
+};
+
+// search with vectorized documents
+const searchTerm = () => {
+  console.time("searchTerm");
+  pool.query(
+    `SELECT
+    * 
+    FROM camps
+    WHERE
+    document @@ to_tsquery('star')`,
+    [],
+    function(err, res) {
+      if (err) {
+        return console.error("error running query", err);
+      }
+      console.timeEnd("searchTerm");
+      console.log("searchTerm: res.rowCount ", res.rowCount);
+    }
+  );
+};
+
+vectorizeAndSearchTerm();
+vectorization();
+searchTerm();
