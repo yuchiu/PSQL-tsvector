@@ -1,0 +1,22 @@
+{
+  "name": "psql-tsvector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuchiu/PSQL-tsvector.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yuchiu/PSQL-tsvector/issues"
+  },
+  "homepage": "https://github.com/yuchiu/PSQL-tsvector#readme",
+  "dependencies": {
+    "pg": "^7.8.2"
+  }
+}
