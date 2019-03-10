@@ -1,10 +1,11 @@
 const { Pool } = require("pg");
-const { vectorize } = "./query";
+const vectorizedAndSearch = require("./vectorizedAndSearch");
+const searchVectorizedTerm = require("./searchVectorizedTerm");
+const searchIndexedTerm = require("./searchIndexedTerm");
 
-/* Connection Configuration */
 var config = {
   user: "postgres",
-  database: "sleepaway_camper", // use your own database as example
+  database: "sleepaway_camper", // use your own database for testing
   password: "postgres",
   host: "localhost",
   port: 5432,
@@ -13,63 +14,20 @@ var config = {
 };
 const pool = new Pool(config);
 
-// vectorize and search in same db operation
-const vectorizeAndSearchTerm = () => {
-  console.time("vectorizeAndSearchTerm");
-  pool.query(
-    `SELECT
-    * 
-    FROM camps
-    WHERE
-    to_tsvector(camps.title || ' ' || camps.description) @@ to_tsquery('star')`,
-    [],
-    function(err, res) {
-      if (err) {
-        return console.error("error running query", err);
-      }
-      console.timeEnd("vectorizeAndSearchTerm");
-      console.log("vectorizeAndSearchTerm: res.rowCount ", res.rowCount);
-    }
-  );
-};
+/* vectorize and search in same db operation */
+vectorizedAndSearch.vectorizeAndSearchTerm(pool); // 240ms
 
-// vectorize title & description in camps
-const vectorization = () => {
-  console.time("vectorization");
-  pool.query(
-    `UPDATE camps
-    SET document = to_tsvector( title || '' || description )`,
-    [],
-    function(err, res) {
-      if (err) {
-        return console.error("error running query", err);
-      }
-      console.timeEnd("vectorization");
-      console.log("vectorization: res.rowCount ", res.rowCount);
-    }
-  );
-};
+/* Add an column 'document' for storing vectorized data if it doesnt exist */
+// searchVectorizedTerm.createDocumentColumn(pool);
+/* vectorize title & description in camps */
+// searchVectorizedTerm.vectorizeDocument(pool);
+searchVectorizedTerm.searchVectorizedTerm(pool); // 16ms
 
-// search with vectorized documents
-const searchTerm = () => {
-  console.time("searchTerm");
-  pool.query(
-    `SELECT
-    * 
-    FROM camps
-    WHERE
-    document @@ to_tsquery('star')`,
-    [],
-    function(err, res) {
-      if (err) {
-        return console.error("error running query", err);
-      }
-      console.timeEnd("searchTerm");
-      console.log("searchTerm: res.rowCount ", res.rowCount);
-    }
-  );
-};
-
-vectorizeAndSearchTerm();
-vectorization();
-searchTerm();
+/* Add an column 'document_with_index' if it doesnt exist */
+// searchIndexedTerm.createDocumentWithIndexColumn(pool);
+/* vectorize title & description in camps */
+// searchIndexedTerm.vectorizeDocumentWithIndex(pool);
+/* Create 'document_index' Index if it doesnt exist */
+// searchIndexedTerm.createDocumentGinIndex(pool);
+/* search with indexed documents */
+searchIndexedTerm.searchTermWithGinIndex(pool); // 8ms
