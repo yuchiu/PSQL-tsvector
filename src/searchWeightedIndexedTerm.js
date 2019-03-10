@@ -22,7 +22,7 @@ const searchWeightedIndexedTerm = {
       `UPDATE camps
     SET 
     document_with_weights = setweight(to_tsvector( title ), 'A') ||
-    setweight(to_tsvector(coalesce(description, '')), 'C')
+    setweight(to_tsvector(coalesce(description, '')), 'B')
     `,
       [],
       function(err, res) {
@@ -56,7 +56,9 @@ const searchWeightedIndexedTerm = {
     console.time("searchTermWithGinWeightedIndex");
     pool.query(
       `SELECT
-    * 
+    camps.*,
+    /* display ranking score of individual item */
+    ts_rank(document_with_weights, plainto_tsquery('star')) 
     FROM camps
     WHERE
     document_with_weights @@ plainto_tsquery('star')
@@ -76,4 +78,33 @@ const searchWeightedIndexedTerm = {
   }
 };
 
-module.exports = searchWeightedIndexedTerm;
+const triggerCampTsvectorUpdate = {
+  // create trigger for updating camp's vectorized columns
+  createUpdateTrigger: pool => {
+    console.time("createUpdateTrigger");
+    pool.query(
+      `CREATE FUNCTIOn camp_tsvector_trigger() RETURNS trigger AS $$
+      begin
+        new.document_with_weights :=
+        setweight(to_tsvector( title ), 'A') ||
+        setweight(to_tsvector(coalesce(description, '')), 'B');
+        return new;
+      end 
+      $$ LANGUAGE plpgsql;
+      
+      CREATE TRIGGER tsvoctorupdate BEFORE INSERT OR UPDATE
+      ON camps FOR EACH ROW EXECUTE PROCEDURE camp_tsvector_trigger();
+      `,
+      [],
+      function(err, res) {
+        if (err) {
+          return console.error("error running query", err);
+        }
+        console.timeEnd("createUpdateTrigger");
+        console.log("createUpdateTrigger: res.rowCount ", res.rowCount);
+      }
+    );
+  }
+};
+
+module.exports = { searchWeightedIndexedTerm, triggerCampTsvectorUpdate };

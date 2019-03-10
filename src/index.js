@@ -2,7 +2,10 @@ const { Pool } = require("pg");
 const vectorizeAndSearch = require("./vectorizeAndSearch");
 const searchVectorizedTerm = require("./searchVectorizedTerm");
 const searchIndexedTerm = require("./searchIndexedTerm");
-const searchWeightedIndexedTerm = require("./searchWeightedIndexedTerm");
+const {
+  searchWeightedIndexedTerm,
+  triggerCampTsvectorUpdate
+} = require("./searchWeightedIndexedTerm");
 
 var config = {
   user: "postgres",
