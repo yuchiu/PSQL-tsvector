@@ -21,7 +21,7 @@ const searchVectorizedTerm = {
     pool.query(
       `UPDATE camps
       SET 
-      document = to_tsvector( title || ' ' || description || ' ' || coalesce(description, ''))`,
+      document = to_tsvector( title || ' ' || coalesce(description, ''))`,
       [],
       function(err, res) {
         if (err) {

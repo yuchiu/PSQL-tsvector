@@ -1,4 +1,4 @@
-const vectorizedAndSearch = {
+const vectorizeAndSearch = {
   // vectorize and search in same db operation
   vectorizeAndSearchTerm: pool => {
     console.time("vectorizeAndSearchTerm");
@@ -20,4 +20,4 @@ const vectorizedAndSearch = {
   }
 };
 
-module.exports = vectorizedAndSearch;
+module.exports = vectorizeAndSearch;

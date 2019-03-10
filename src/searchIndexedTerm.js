@@ -21,7 +21,7 @@ const searchIndexedTerm = {
     pool.query(
       `UPDATE camps
     SET 
-    document_with_index = to_tsvector( title || ' ' || description || ' ' || coalesce(description, ''));
+    document_with_index = to_tsvector( title || ' ' || coalesce(description, ''));
     `,
       [],
       function(err, res) {
@@ -58,7 +58,8 @@ const searchIndexedTerm = {
     * 
     FROM camps
     WHERE
-    document_with_index @@ to_tsquery('star')`,
+    document_with_index @@ plainto_tsquery('star')
+    ORDER BY ts_rank(document_with_index, plainto_tsquery('star'))`,
       [],
       function(err, res) {
         if (err) {
